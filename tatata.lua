@@ -18,19 +18,20 @@ local userList = Instance.new("ScrollingFrame")
 local teleportButton = Instance.new("TextButton")
 local espButton = Instance.new("TextButton")
 local giveButton = Instance.new("TextButton")
+local trollTpButton = Instance.new("TextButton") -- Новая кнопка Troll TP
 
 screenGui.Name = "AdminGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = CoreGui
 
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 300, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.Size = UDim2.new(0, 300, 0, 450)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -225)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.Parent = screenGui
 
 userList.Name = "UserList"
-userList.Size = UDim2.new(1, -20, 1, -140)
+userList.Size = UDim2.new(1, -20, 1, -190)
 userList.Position = UDim2.new(0, 10, 0, 10)
 userList.CanvasSize = UDim2.new(0, 0, 10, 0)
 userList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -38,7 +39,7 @@ userList.Parent = mainFrame
 
 teleportButton.Name = "TeleportButton"
 teleportButton.Size = UDim2.new(1, -20, 0, 40)
-teleportButton.Position = UDim2.new(0, 10, 1, -90)
+teleportButton.Position = UDim2.new(0, 10, 1, -140)
 teleportButton.Text = "TELEPORT"
 teleportButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -46,7 +47,7 @@ teleportButton.Parent = mainFrame
 
 espButton.Name = "ESPButton"
 espButton.Size = UDim2.new(1, -20, 0, 40)
-espButton.Position = UDim2.new(0, 10, 1, -140)
+espButton.Position = UDim2.new(0, 10, 1, -190)
 espButton.Text = "ESP ON"
 espButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -54,14 +55,23 @@ espButton.Parent = mainFrame
 
 giveButton.Name = "GiveButton"
 giveButton.Size = UDim2.new(1, -20, 0, 40)
-giveButton.Position = UDim2.new(0, 10, 1, -190)
+giveButton.Position = UDim2.new(0, 10, 1, -240)
 giveButton.Text = "GIVE TOOL"
 giveButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 giveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 giveButton.Parent = mainFrame
 
+trollTpButton.Name = "TrollTpButton"
+trollTpButton.Size = UDim2.new(1, -20, 0, 40)
+trollTpButton.Position = UDim2.new(0, 10, 1, -90)
+trollTpButton.Text = "TROLL TP"
+trollTpButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+trollTpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+trollTpButton.Parent = mainFrame
+
 -- Хранение текущего подключения к событию нажатия кнопки телепорта
 local teleportConnection
+local trollTpConnection
 
 -- Функция для обновления списка пользователей
 local function updateUserList()
@@ -82,14 +92,46 @@ local function updateUserList()
 
         userButton.MouseButton1Click:Connect(function()
             teleportButton.Text = "TELEPORT TO " .. player.Name
+            trollTpButton.Text = "TROLL TP " .. player.Name -- Обновление текста кнопки Troll TP
             if teleportConnection then
                 teleportConnection:Disconnect()
             end
+            if trollTpConnection then
+                trollTpConnection:Disconnect()
+            end
+
             teleportConnection = teleportButton.MouseButton1Click:Connect(function()
                 local character = player.Character
                 if character and character:FindFirstChild("HumanoidRootPart") then
                     local hrp = character.HumanoidRootPart
                     Players.LocalPlayer.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                end
+            end)
+
+            trollTpConnection = trollTpButton.MouseButton1Click:Connect(function()
+                local character = player.Character
+                local localPlayerCharacter = Players.LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") and localPlayerCharacter and localPlayerCharacter:FindFirstChild("HumanoidRootPart") then
+                    local hrp = character.HumanoidRootPart
+                    local localHrp = localPlayerCharacter.HumanoidRootPart
+                    local originalPosition = localHrp.CFrame
+
+                    -- Телепортировать выбранного игрока и себя в нижнюю точку карты
+                    local newPosition = CFrame.new(0, -5000, 0) -- Нижняя точка карты
+                    localHrp.CFrame = newPosition
+                    wait(0.1) -- Небольшая задержка для синхронизации
+                    hrp.CFrame = newPosition
+
+                    -- Установить здоровье игрока в ноль
+                    local humanoid = character:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        humanoid.Health = 0
+                    end
+
+                    wait(1) -- Задержка перед возвращением
+
+                    -- Вернуть игрока на исходную позицию
+                    localHrp.CFrame = originalPosition
                 end
             end)
         end)
@@ -297,8 +339,8 @@ local function giveTool()
                     s.Scale = Vector3.new(.25, .25, dist)
                     wait()
                 end
-                r:remove()
-                script:remove()
+                r:Destroy()
+                script:Destroy()
             end
         )
     )
@@ -389,7 +431,7 @@ local function giveTool()
                                     end
                                     wait()
                                 end
-                                C:remove()
+                                C:Destroy()
                             end
                         )
                     )
@@ -413,7 +455,7 @@ local function giveTool()
                         BP.position = front.Position + t.lookVector * dist
                         wait()
                     end
-                    BP:remove()
+                    BP:Destroy()
                     object = nil
                     objval.Value = nil
                 end
@@ -482,9 +524,9 @@ local function giveTool()
                         function()
                             if human.Health == 0 then
                                 mousedown = false
-                                BP:remove()
-                                point:remove()
-                                tool:remove()
+                                BP:Destroy()
+                                point:Destroy()
+                                tool:Destroy()
                             end
                         end
                     )
